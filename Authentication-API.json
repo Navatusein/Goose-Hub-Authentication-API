@@ -1,0 +1,428 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "version": "1.0",
+    "title": "Authentication API",
+    "description": "Authorization service for the Goose Hub thesis project of the Sad Cats team.",
+    "contact": {
+      "name": "Bohdan",
+      "email": "boghdan.kutsulima@gmail.com",
+      "url": "https://github.com/Navatusein"
+    },
+    "license": {
+      "url": "https://github.com/Navatusein/Goose-Hub-Authentication-API/blob/main/LICENSE",
+      "name": "MIT"
+    }
+  },
+  "servers": [
+    {
+      "url": "https://goose-hub.sadkittens.duckdns.org/api/authentication-api/v1",
+      "description": "Main Server"
+    }
+  ],
+  "paths": {
+    "/login": {
+      "post": {
+        "tags": [
+          "authentication",
+          "unauthorized"
+        ],
+        "summary": "Login User",
+        "description": "",
+        "operationId": "post-login",
+        "requestBody": {
+          "description": "",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoginDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Login success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserDto"
+                }
+              }
+            },
+            "headers": {
+              "refresh-token": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Token for refresh jwt token"
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid login or password",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [],
+        "servers": [
+          {
+            "url": "https://goose-hub.sadkittens.duckdns.org/api/authentication-api/v1",
+            "description": "Main Server"
+          }
+        ],
+        "x-internal": false
+      }
+    },
+    "/register": {
+      "post": {
+        "tags": [
+          "authentication",
+          "unauthorized"
+        ],
+        "summary": "Register User",
+        "description": "",
+        "operationId": "post-register",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegisterDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Register success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserDto"
+                }
+              }
+            },
+            "headers": {
+              "refresh-token": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Token for refresh jwt token"
+              }
+            }
+          },
+          "400": {
+            "description": "Login already taken",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [],
+        "servers": [
+          {
+            "url": "https://goose-hub.sadkittens.duckdns.org/api/authentication-api/v1",
+            "description": "Main Server"
+          }
+        ]
+      }
+    },
+    "/refresh": {
+      "post": {
+        "tags": [
+          "authentication",
+          "unauthorized"
+        ],
+        "summary": "Refresh JWT Token",
+        "description": "",
+        "operationId": "post-refresh",
+        "parameters": [
+          {
+            "name": "refresh-token",
+            "in": "cookie",
+            "description": "Token for refresh jwt token",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RefreshDto"
+              },
+              "examples": {
+                "Example 1": {
+                  "value": {
+                    "jwtToken": "string",
+                    "userId": "2c4a230c-5085-4924-a3e1-25fb4fc5965b"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserDto"
+                }
+              }
+            },
+            "headers": {
+              "refresh-token": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Token for refresh jwt token"
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid refresh token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [],
+        "servers": [
+          {
+            "url": "https://goose-hub.sadkittens.duckdns.org/api/authentication-api/v1",
+            "description": "Main Server"
+          }
+        ]
+      }
+    },
+    "/update-user": {
+      "put": {
+        "tags": [
+          "authentication",
+          "authorized"
+        ],
+        "summary": "Update User Data",
+        "description": "",
+        "operationId": "put-update-user",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateUserDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "400": {
+            "description": "Old and new passwords doesn't match",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "jwtToken": []
+          }
+        ],
+        "servers": [
+          {
+            "url": "https://goose-hub.sadkittens.duckdns.org/api/authentication-api/v1",
+            "description": "Main Server"
+          }
+        ]
+      }
+    }
+  },
+  "tags": [
+    {
+      "name": "authentication"
+    },
+    {
+      "name": "authorized"
+    },
+    {
+      "name": "role-admin"
+    },
+    {
+      "name": "role-user"
+    },
+    {
+      "name": "unauthorized"
+    }
+  ],
+  "components": {
+    "securitySchemes": {
+      "jwtToken": {
+        "type": "apiKey",
+        "name": "barrer",
+        "in": "header"
+      }
+    },
+    "schemas": {
+      "LoginDto": {
+        "type": "object",
+        "title": "LoginDto",
+        "properties": {
+          "login": {
+            "type": "string"
+          },
+          "password": {
+            "type": "string",
+            "format": "password"
+          }
+        },
+        "required": [
+          "login",
+          "password"
+        ]
+      },
+      "UserDto": {
+        "type": "object",
+        "title": "UserDto",
+        "properties": {
+          "jwtToken": {
+            "type": "string"
+          },
+          "userId": {
+            "type": "string",
+            "format": "uuid"
+          }
+        },
+        "required": [
+          "jwtToken",
+          "userId"
+        ]
+      },
+      "ErrorDto": {
+        "type": "object",
+        "title": "ErrorDto",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "message": {
+            "type": "string"
+          },
+          "code": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "message",
+          "code"
+        ]
+      },
+      "RegisterDto": {
+        "type": "object",
+        "title": "RegisterDto",
+        "properties": {
+          "login": {
+            "type": "string"
+          },
+          "password": {
+            "type": "string",
+            "format": "password"
+          },
+          "email": {
+            "type": "string",
+            "format": "email"
+          }
+        },
+        "required": [
+          "login",
+          "password",
+          "email"
+        ]
+      },
+      "RefreshDto": {
+        "type": "object",
+        "title": "RefreshDto",
+        "properties": {
+          "jwtToken": {
+            "type": "string"
+          },
+          "userId": {
+            "type": "string",
+            "format": "uuid"
+          }
+        }
+      },
+      "UpdateUserDto": {
+        "type": "object",
+        "title": "UpdateUserDto",
+        "properties": {
+          "userId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "login": {
+            "type": "string"
+          },
+          "oldPassword": {
+            "type": "string",
+            "format": "password"
+          },
+          "newPassword": {
+            "type": "string",
+            "format": "password"
+          },
+          "email": {
+            "type": "string",
+            "format": "email"
+          }
+        },
+        "required": [
+          "userId",
+          "login",
+          "oldPassword",
+          "newPassword",
+          "email"
+        ]
+      }
+    }
+  },
+  "security": [
+    {},
+    {
+      "jwtToken": []
+    }
+  ]
+}
