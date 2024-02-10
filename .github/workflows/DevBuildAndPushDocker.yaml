@@ -33,4 +33,5 @@ jobs:
           context: .
           file: ./Dockerfile
           push: true
-          tags: :, ${{ secrets.DOCKERHUB_USERNAME }}/goose-hub-authentication-api:dev-latest
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
