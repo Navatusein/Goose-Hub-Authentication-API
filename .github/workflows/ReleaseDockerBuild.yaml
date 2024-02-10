@@ -1,4 +1,4 @@
-name: Release Build and Push Docker image to Docker Hub
+name: Release Build Docker
 
 on:
   push:
@@ -7,7 +7,7 @@ on:
 
 jobs:
   push_to_registry:
-    name: Push Docker image to Docker Hub
+    name: Release Build Docker
     runs-on: ubuntu-latest
     steps:
       - name: Check out the repo
