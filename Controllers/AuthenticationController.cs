@@ -134,7 +134,6 @@ namespace AuthenticationAPI.Controllers
         [Route("update-user")]
         [Authorize(Roles = "User,Admin")]
         [SwaggerResponse(statusCode: 400, type: typeof(ErrorDto), description: "Old and new passwords doesn&#39;t match")]
-        [SwaggerResponse(statusCode: 401, type: typeof(ErrorDto), description: "Unauthorized")]
         public async Task<IActionResult> PutUpdateUser([FromBody] UpdateUserDto updateUserDto)
         {
 
