@@ -35,6 +35,7 @@ namespace AuthenticationAPI.Controllers
         /// <summary>
         /// Login User
         /// </summary>
+        /// <remarks>Login user</remarks>
         /// <param name="loginDto"></param>
         /// <response code="200">Login success</response>
         /// <response code="400">Invalid login or password</response>
@@ -43,7 +44,7 @@ namespace AuthenticationAPI.Controllers
         [AllowAnonymous]
         [SwaggerResponse(statusCode: 200, type: typeof(UserDto), description: "Login success")]
         [SwaggerResponse(statusCode: 400, type: typeof(ErrorDto), description: "Invalid login or password")]
-        public Task<IActionResult> PostLogin([FromBody] LoginDto loginDto)
+        public async Task<IActionResult> PostLogin([FromBody] LoginDto loginDto)
         {
 
             //var cookieOptions = new CookieOptions
@@ -67,6 +68,7 @@ namespace AuthenticationAPI.Controllers
         /// <summary>
         /// Refresh JWT Token
         /// </summary>
+        /// <remarks>Refresh JWT token</remarks>
         /// <param name="refreshDto"></param>
         /// <response code="200">OK</response>
         /// <response code="400">Invalid refresh token</response>
@@ -75,7 +77,7 @@ namespace AuthenticationAPI.Controllers
         [AllowAnonymous]
         [SwaggerResponse(statusCode: 200, type: typeof(UserDto), description: "OK")]
         [SwaggerResponse(statusCode: 400, type: typeof(ErrorDto), description: "Invalid refresh token")]
-        public Task<IActionResult> PostRefresh([FromBody] RefreshDto refreshDto)
+        public async Task<IActionResult> PostRefresh([FromBody] RefreshDto refreshDto)
         {
             var refreshToken = Request.Cookies[CookieKey];
 
@@ -100,6 +102,7 @@ namespace AuthenticationAPI.Controllers
         /// <summary>
         /// Register User
         /// </summary>
+        /// <remarks>Register user</remarks>
         /// <param name="registerDto"></param>
         /// <response code="200">Register success</response>
         /// <response code="400">Login already taken</response>
@@ -108,7 +111,7 @@ namespace AuthenticationAPI.Controllers
         [AllowAnonymous]
         [SwaggerResponse(statusCode: 200, type: typeof(UserDto), description: "Register success")]
         [SwaggerResponse(statusCode: 400, type: typeof(ErrorDto), description: "Login already taken")]
-        public Task<IActionResult> PostRegister([FromBody] RegisterDto registerDto)
+        public async Task<IActionResult> PostRegister([FromBody] RegisterDto registerDto)
         {
 
             //TODO: Uncomment the next line to return response 200 or use other options such as return this.NotFound(), return this.BadRequest(..), ...
@@ -122,16 +125,17 @@ namespace AuthenticationAPI.Controllers
         /// <summary>
         /// Update User Data
         /// </summary>
+        /// <remarks>Update user login, password, email</remarks>
         /// <param name="updateUserDto"></param>
         /// <response code="200">OK</response>
         /// <response code="400">Old and new passwords doesn&#39;t match</response>
         /// <response code="401">Unauthorized</response>
         [HttpPut]
         [Route("update-user")]
-        [Authorize(Roles = "User, Admin")]
+        [Authorize(Roles = "User,Admin")]
         [SwaggerResponse(statusCode: 400, type: typeof(ErrorDto), description: "Old and new passwords doesn&#39;t match")]
         [SwaggerResponse(statusCode: 401, type: typeof(ErrorDto), description: "Unauthorized")]
-        public virtual IActionResult PutUpdateUser([FromBody] UpdateUserDto updateUserDto)
+        public async Task<IActionResult> PutUpdateUser([FromBody] UpdateUserDto updateUserDto)
         {
 
             //TODO: Uncomment the next line to return response 200 or use other options such as return this.NotFound(), return this.BadRequest(..), ...
@@ -143,8 +147,9 @@ namespace AuthenticationAPI.Controllers
         }
 
         /// <summary>
-        /// Generate password hash
+        /// Generate Password Hash
         /// </summary>
+        /// <remarks>Generate password hash</remarks>
         /// <param name="password"></param>
         /// <response code="200">OK</response>
         [HttpGet]
