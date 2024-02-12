@@ -113,6 +113,7 @@ namespace AuthenticationAPI.Controllers
         [SwaggerResponse(statusCode: 400, type: typeof(ErrorDto), description: "Login already taken")]
         public async Task<IActionResult> PostRegister([FromBody] RegisterDto registerDto)
         {
+            //TODO: Send request to User Profile API to create user profile
 
             //TODO: Uncomment the next line to return response 200 or use other options such as return this.NotFound(), return this.BadRequest(..), ...
             // return StatusCode(200, UserDto);

@@ -1,5 +1,6 @@
 ﻿using Microsoft.IdentityModel.Tokens;
 using System.Data;
+using System.Globalization;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
@@ -66,8 +67,9 @@ namespace AuthenticationAPI.Service
         /// </summary>
         /// <param name="userId">Id of user</param>
         /// <param name="role">User role</param>
+        /// <param name="minutes">Time to token expires</param>
         /// <returns>Authorization JWT token</returns>
-        public string GenerateAuthorizationToken(string userId, string role)
+        public string GenerateAuthorizationToken(string userId, string role, int minutes = 60)
         {
             var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config["AuthorizeJWT:Key"]!));
             var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
@@ -82,7 +84,7 @@ namespace AuthenticationAPI.Service
                 _config["AuthorizeJWT:Issuer"],
                 _config["AuthorizeJWT:Audience"],
                 claims,
-                expires: DateTime.Now.AddMinutes(60),
+                expires: DateTime.Now.AddMinutes(minutes),
                 signingCredentials: credentials);
 
             return new JwtSecurityTokenHandler().WriteToken(token);
