@@ -41,7 +41,7 @@ namespace AuthenticationAPI.Service
                 ValidateIssuerSigningKey = true,
                 ValidIssuer = _config["RefreshJWT:Issuer"],
                 ValidAudience = _config["RefreshJWT:Audience"],
-                IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config["FrontendRefreshJWT:Key"]!))
+                IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config["RefreshJWT:Key"]!))
             };
 
             if (!tokenHandler.CanReadToken(token))
@@ -51,8 +51,8 @@ namespace AuthenticationAPI.Service
             {
                 var principal = tokenHandler.ValidateToken(token, validationParameters, out var validatedToken);
 
-                if (principal.HasClaim(c => c.Type == "id"))
-                    return userId == principal.Claims.First(c => c.Type == "userId").Value;
+                if (principal.HasClaim(c => c.Type == "UserId"))
+                    return userId == principal.Claims.First(c => c.Type == "UserId").Value;
             }
             catch (Exception exception)
             {
@@ -76,7 +76,7 @@ namespace AuthenticationAPI.Service
 
             var claims = new[]
             {
-                new Claim("userId", userId),
+                new Claim("UserId", userId),
                 new Claim(ClaimTypes.Role, role)
             };
 

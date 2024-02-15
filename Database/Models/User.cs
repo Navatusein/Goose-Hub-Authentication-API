@@ -30,6 +30,11 @@ namespace AuthenticationAPI.Database.Models
         /// <summary>
         /// 
         /// </summary>
+        public string Role { get; set; } = null!;
+
+        /// <summary>
+        /// 
+        /// </summary>
         public string PasswordHash { get; set; } = null!;
 
         /// <summary>
