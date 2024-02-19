@@ -7,6 +7,8 @@ using Swashbuckle.AspNetCore.Annotations;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Cryptography;
 using System.Text;
+using System.Linq;
+using AuthenticationAPI.Database.Models;
 
 namespace AuthenticationAPI.Controllers
 {
@@ -56,6 +58,13 @@ namespace AuthenticationAPI.Controllers
             //};
 
             //Response.Cookies.Append(CookieKey, refreshToken, cookieOptions);
+
+            var user = _context.Users.FirstOrDefault(u => u.Login == loginDto.Login);
+            if(user != null)
+            {
+                UserDto dto = new UserDto() { JwtToken = "success", UserId = user.UserId };
+                return StatusCode(200, dto);
+            }
 
             //TODO: Uncomment the next line to return response 200 or use other options such as return this.NotFound(), return this.BadRequest(..), ...
             // return StatusCode(200, UserDto);
@@ -114,6 +123,31 @@ namespace AuthenticationAPI.Controllers
         public async Task<IActionResult> PostRegister([FromBody] RegisterDto registerDto)
         {
             //TODO: Send request to User Profile API to create user profile
+
+            var existing_login = _context.Users.FirstOrDefault(u => u.Login == registerDto.Login);
+            var existing_email = _context.Users.FirstOrDefault(u => u.Email == registerDto.Email);
+            if (existing_email != null || existing_login != null)
+            {
+                string message = string.Empty;
+                if (existing_login != null) { message += "Login: " + registerDto.Login.ToString() + " "; }
+                if (existing_email != null) 
+                { 
+                    if (message == string.Empty) { message += "Email: " + registerDto.Email.ToString() + " "; }
+                    else { message += "and Email: " + registerDto.Email.ToString() + " "; }
+                }
+                ErrorDto dto = new ErrorDto() { Id = Guid.NewGuid().ToString(), Message = message + "is already exist!", Code = "#" };
+                return StatusCode(400, dto);
+            }
+            else if (existing_email == null && existing_login == null)
+            {
+                // !!!!! как брать айди и юзерайди на юзера
+                User user = new User() {Id = 2, UserId = "2", Login = registerDto.Login, Email = registerDto.Email, Role = "user" };
+                user.CreatePasswordHash(registerDto.Password);
+                _context.Users.Add(user);
+                await _context.SaveChangesAsync();
+                UserDto dto = new UserDto() { JwtToken = "Success" };
+                return StatusCode(200, dto);
+            }
 
             //TODO: Uncomment the next line to return response 200 or use other options such as return this.NotFound(), return this.BadRequest(..), ...
             // return StatusCode(200, UserDto);

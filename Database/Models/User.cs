@@ -8,42 +8,42 @@ namespace AuthenticationAPI.Database.Models
     public class User
     {
         /// <summary>
-        /// 
+        /// Id in database
         /// </summary>
         public int Id { get; set; }
 
         /// <summary>
-        /// 
+        /// User id
         /// </summary>
         public string UserId { get; set; } = null!;
 
         /// <summary>
-        /// 
+        /// user`s login
         /// </summary>
         public string Login { get; set; } = null!;
 
         /// <summary>
-        /// 
+        /// User`s email
         /// </summary>
         public string Email { get; set; } = null!;
 
         /// <summary>
-        /// 
+        /// Role of user
         /// </summary>
         public string Role { get; set; } = null!;
 
         /// <summary>
-        /// 
+        /// Hashed password
         /// </summary>
         public string PasswordHash { get; set; } = null!;
 
         /// <summary>
-        /// 
+        /// Salted password
         /// </summary>
         public string PasswordSalt { get; set; } = null!;
 
         /// <summary>
-        /// 
+        /// Verify recieved hash of password
         /// </summary>
         /// <param name="password">User password</param>
         /// <returns>True if user password </returns>
@@ -58,7 +58,7 @@ namespace AuthenticationAPI.Database.Models
         }
 
         /// <summary>
-        /// 
+        ///  Create Hash for user`s password
         /// </summary>
         /// <param name="password">User password</param>
         public void CreatePasswordHash(string password)
