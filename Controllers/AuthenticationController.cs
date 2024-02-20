@@ -9,6 +9,7 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Linq;
 using AuthenticationAPI.Database.Models;
+using Serilog;
 
 namespace AuthenticationAPI.Controllers
 {
@@ -62,9 +63,13 @@ namespace AuthenticationAPI.Controllers
             var user = _context.Users.FirstOrDefault(u => u.Login == loginDto.Login);
             if(user != null)
             {
-                UserDto dto = new UserDto() { JwtToken = "success", UserId = user.UserId };
-                return StatusCode(200, dto);
+                if (loginDto.Password != null && user.VerifyPasswordHash(loginDto.Password.ToString()))
+                {
+                    return StatusCode(200, new UserDto() { JwtToken = _jwtService.GenerateAuthorizationToken(user.UserId, "user"), UserId = user.UserId });
+                }
+                else { return StatusCode(400, new ErrorDto() { Id = Guid.NewGuid().ToString(), Message = "Invalid password", Code = "401" }); }
             }
+            else if (user == null) { return StatusCode(400, new ErrorDto() { Id = Guid.NewGuid().ToString(), Message = "User not found", Code = "404" }); }
 
             //TODO: Uncomment the next line to return response 200 or use other options such as return this.NotFound(), return this.BadRequest(..), ...
             // return StatusCode(200, UserDto);
@@ -124,7 +129,8 @@ namespace AuthenticationAPI.Controllers
         {
             //TODO: Send request to User Profile API to create user profile
 
-            var existing_login = _context.Users.FirstOrDefault(u => u.Login == registerDto.Login);
+            // Check if login exists in db
+            var existing_login = _context.Users.FirstOrDefault(u => u.Login.ToLower() == registerDto.Login.ToLower());
             var existing_email = _context.Users.FirstOrDefault(u => u.Email == registerDto.Email);
             if (existing_email != null || existing_login != null)
             {
@@ -135,18 +141,41 @@ namespace AuthenticationAPI.Controllers
                     if (message == string.Empty) { message += "Email: " + registerDto.Email.ToString() + " "; }
                     else { message += "and Email: " + registerDto.Email.ToString() + " "; }
                 }
-                ErrorDto dto = new ErrorDto() { Id = Guid.NewGuid().ToString(), Message = message + "is already exist!", Code = "#" };
-                return StatusCode(400, dto);
+                return StatusCode(400, new ErrorDto() { Id = Guid.NewGuid().ToString(), Message = message + "is already exist!", Code = "409" });
             }
+
+
+            // If doesnt exist - add to db
             else if (existing_email == null && existing_login == null)
             {
-                // !!!!! как брать айди и юзерайди на юзера
-                User user = new User() {Id = 2, UserId = "2", Login = registerDto.Login, Email = registerDto.Email, Role = "user" };
+                // Password verivication required!!!!!!
+
+                //Verivication email adress
+                try
+                {
+                    var addr = new System.Net.Mail.MailAddress(registerDto.Email);
+                }
+                catch
+                {
+                    return StatusCode(400, new ErrorDto() { Id = Guid.NewGuid().ToString(), Message = "Invalid email format", Code = "409" });
+                }
+                User user = new User() { UserId = Guid.NewGuid().ToString(), Login = registerDto.Login, Email = registerDto.Email, Role = "user" };
                 user.CreatePasswordHash(registerDto.Password);
                 _context.Users.Add(user);
-                await _context.SaveChangesAsync();
-                UserDto dto = new UserDto() { JwtToken = "Success" };
-                return StatusCode(200, dto);
+                using (var transaction = _context.Database.BeginTransaction())
+                {
+                    try
+                    {
+                        await _context.SaveChangesAsync();
+                        transaction.Commit();
+                    }
+                    catch (Exception ex)
+                    {
+                        transaction.Rollback();
+                        Log.Debug(ex.Message);
+                    }
+                }
+                return StatusCode(200, new UserDto() { JwtToken = _jwtService.GenerateAuthorizationToken(user.UserId, "user"), UserId = user.UserId });
             }
 
             //TODO: Uncomment the next line to return response 200 or use other options such as return this.NotFound(), return this.BadRequest(..), ...
@@ -168,7 +197,7 @@ namespace AuthenticationAPI.Controllers
         [HttpPut]
         [Route("update-user")]
         [Authorize(Roles = "User,Admin")]
-        [SwaggerResponse(statusCode: 400, type: typeof(ErrorDto), description: "Old and new passwords doesn&#39;t match")]
+        [SwaggerResponse(statusCode: 400, type: typeof(ErrorDto), description: "Old and new passwords doesn`t match")]
         public async Task<IActionResult> PutUpdateUser([FromBody] UpdateUserDto updateUserDto)
         {
 

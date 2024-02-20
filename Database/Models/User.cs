@@ -1,4 +1,5 @@
-﻿using System.Security.Cryptography;
+﻿using Castle.Components.DictionaryAdapter;
+using System.Security.Cryptography;
 
 namespace AuthenticationAPI.Database.Models
 {
@@ -10,6 +11,7 @@ namespace AuthenticationAPI.Database.Models
         /// <summary>
         /// Id in database
         /// </summary>
+        [System.ComponentModel.DataAnnotations.Key]
         public int Id { get; set; }
 
         /// <summary>
