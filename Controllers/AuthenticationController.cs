@@ -10,6 +10,7 @@ using System.Text;
 using System.Linq;
 using AuthenticationAPI.Database.Models;
 using Serilog;
+using System.Xml;
 
 namespace AuthenticationAPI.Controllers
 {
@@ -49,27 +50,39 @@ namespace AuthenticationAPI.Controllers
         [SwaggerResponse(statusCode: 400, type: typeof(ErrorDto), description: "Invalid login or password")]
         public async Task<IActionResult> PostLogin([FromBody] LoginDto loginDto)
         {
-
-            //var cookieOptions = new CookieOptions
-            //{
-            //    HttpOnly = true,
-            //    Expires = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Utc).AddDays(30),
-            //    Secure = true,
-            //    SameSite = SameSiteMode.None
-            //};
-
-            //Response.Cookies.Append(CookieKey, refreshToken, cookieOptions);
-
-            var user = _context.Users.FirstOrDefault(u => u.Login == loginDto.Login);
-            if(user != null)
+            var user = _context.Users.FirstOrDefault(u => u.Login.ToLower() == loginDto.Login.ToLower());
+            Logger.Debug($"Start login (user: {user.UserId})");
+            
+            if(user == null)
             {
-                if (loginDto.Password != null && user.VerifyPasswordHash(loginDto.Password.ToString()))
-                {
-                    return StatusCode(200, new UserDto() { JwtToken = _jwtService.GenerateAuthorizationToken(user.UserId, "user"), UserId = user.UserId });
-                }
-                else { return StatusCode(400, new ErrorDto() { Id = Guid.NewGuid().ToString(), Message = "Invalid password", Code = "401" }); }
+                Logger.Debug("Post login: error - user not found");
+                return StatusCode(400, new ErrorDto { Id = Guid.NewGuid().ToString(), Message = "User not found", Code = "404" });
             }
-            else if (user == null) { return StatusCode(400, new ErrorDto() { Id = Guid.NewGuid().ToString(), Message = "User not found", Code = "404" }); }
+
+            if (!user.VerifyPasswordHash(loginDto.Password))
+            {
+                Logger.Debug("Post login: error - invalid password");
+                return StatusCode(400, new ErrorDto { Id = Guid.NewGuid().ToString(), Message = "Invalid password", Code = "401" });
+            }
+
+            UserDto dto = new UserDto()
+            {
+                JwtToken = _jwtService.GenerateAuthorizationToken(user.UserId, "User"),
+                UserId = user.UserId
+            };
+
+            var cookieOptions = new CookieOptions
+            {
+                HttpOnly = true,
+                Expires = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Utc).AddDays(30),
+                Secure = true,
+                SameSite = SameSiteMode.None
+            };
+
+            Response.Cookies.Append(CookieKey, dto.JwtToken, cookieOptions);
+            Logger.Debug($"Post login finished, user: {dto.UserId}, token: {dto.JwtToken}");
+            return StatusCode(200, dto);
+
 
             //TODO: Uncomment the next line to return response 200 or use other options such as return this.NotFound(), return this.BadRequest(..), ...
             // return StatusCode(200, UserDto);
@@ -93,17 +106,47 @@ namespace AuthenticationAPI.Controllers
         [SwaggerResponse(statusCode: 400, type: typeof(ErrorDto), description: "Invalid refresh token")]
         public async Task<IActionResult> PostRefresh([FromBody] RefreshDto refreshDto)
         {
+            Logger.Debug($"Start refresh (user: {refreshDto.UserId})");
             var refreshToken = Request.Cookies[CookieKey];
+            Logger.Debug($"Refresh token of user {refreshDto.UserId}: {refreshToken}");
+            
+            if(refreshToken == null)
+            {
+                Logger.Debug($"Post Refresh: error - Refresh token is null");
+                return StatusCode(400, new ErrorDto() { Id = Guid.NewGuid().ToString(), Message = "Invalid refresh token", Code = "401" });
+            }
 
-            //var cookieOptions = new CookieOptions
-            //{
-            //    HttpOnly = true,
-            //    Expires = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Utc).AddDays(30),
-            //    Secure = true,
-            //    SameSite = SameSiteMode.None
-            //};
+            if (!_jwtService.ValidateRefreshToken(refreshToken, refreshDto.UserId))
+            {
+                Logger.Debug($"Post Refresh: error - Invalid refresh token");
+                return StatusCode(400, new ErrorDto() { Id = Guid.NewGuid().ToString(), Message = "Invalid refresh token", Code = "401" });
+            }
 
-            //Response.Cookies.Append(CookieKey, refreshToken, cookieOptions);
+            var user = _context.Users.FirstOrDefault(u => u.UserId == refreshDto.UserId);
+            if(user == null)
+            {
+                Logger.Debug($"Post Refresh: error - no user exists");
+                return StatusCode(400, new ErrorDto() { Id = Guid.NewGuid().ToString(), Message = "Invalid user data", Code = "401" });
+            }
+
+            refreshToken = _jwtService.GenerateRefreshToken(refreshToken);
+
+            var cookieOptions = new CookieOptions
+            {
+                HttpOnly = true,
+                Expires = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Utc).AddDays(30),
+                Secure = true,
+                SameSite = SameSiteMode.None
+            };
+
+            Response.Cookies.Append(CookieKey, refreshToken, cookieOptions);
+            UserDto dto = new UserDto()
+            {
+                JwtToken = refreshToken,
+                UserId = user.UserId
+            };
+
+            return Ok(dto);
 
             //TODO: Uncomment the next line to return response 200 or use other options such as return this.NotFound(), return this.BadRequest(..), ...
             // return StatusCode(200, UserDto);
@@ -128,55 +171,54 @@ namespace AuthenticationAPI.Controllers
         public async Task<IActionResult> PostRegister([FromBody] RegisterDto registerDto)
         {
             //TODO: Send request to User Profile API to create user profile
+            Logger.Debug($"Start register user login: {registerDto.Login}");
+            var user_check = _context.Users.FirstOrDefault(u => u.Login.ToLower() == registerDto.Login.ToLower());
 
-            // Check if login exists in db
-            var existing_login = _context.Users.FirstOrDefault(u => u.Login.ToLower() == registerDto.Login.ToLower());
-            var existing_email = _context.Users.FirstOrDefault(u => u.Email == registerDto.Email);
-            if (existing_email != null || existing_login != null)
+            if (user_check != null)
             {
-                string message = string.Empty;
-                if (existing_login != null) { message += "Login: " + registerDto.Login.ToString() + " "; }
-                if (existing_email != null) 
-                { 
-                    if (message == string.Empty) { message += "Email: " + registerDto.Email.ToString() + " "; }
-                    else { message += "and Email: " + registerDto.Email.ToString() + " "; }
-                }
-                return StatusCode(400, new ErrorDto() { Id = Guid.NewGuid().ToString(), Message = message + "is already exist!", Code = "409" });
+                Logger.Debug($"Post register: error - login exists");
+                return StatusCode(400, new ErrorDto() { Id = Guid.NewGuid().ToString(), Message = "Login is already taken", Code = "401" });
             }
 
-
-            // If doesnt exist - add to db
-            else if (existing_email == null && existing_login == null)
+            try
             {
-                // Password verivication required!!!!!!
-
-                //Verivication email adress
-                try
-                {
-                    var addr = new System.Net.Mail.MailAddress(registerDto.Email);
-                }
-                catch
-                {
-                    return StatusCode(400, new ErrorDto() { Id = Guid.NewGuid().ToString(), Message = "Invalid email format", Code = "409" });
-                }
-                User user = new User() { UserId = Guid.NewGuid().ToString(), Login = registerDto.Login, Email = registerDto.Email, Role = "user" };
-                user.CreatePasswordHash(registerDto.Password);
-                _context.Users.Add(user);
-                using (var transaction = _context.Database.BeginTransaction())
-                {
-                    try
-                    {
-                        await _context.SaveChangesAsync();
-                        transaction.Commit();
-                    }
-                    catch (Exception ex)
-                    {
-                        transaction.Rollback();
-                        Log.Debug(ex.Message);
-                    }
-                }
-                return StatusCode(200, new UserDto() { JwtToken = _jwtService.GenerateAuthorizationToken(user.UserId, "user"), UserId = user.UserId });
+                var tmp = new System.Net.Mail.MailAddress(registerDto.Email);
             }
+            catch
+            {
+                Logger.Debug($"Post register: error - email is not exist");
+                return StatusCode(400, new ErrorDto() { Id = Guid.NewGuid().ToString(), Message = "Invalid email", Code = "401" });
+            }
+
+            User user = new User()
+            {
+                UserId = Guid.NewGuid().ToString(),
+                Login = registerDto.Login,
+                Email = registerDto.Email,
+                Role = "User"
+            };
+            user.CreatePasswordHash(registerDto.Password);
+            _context.Users.Add(user);
+            await _context.SaveChangesAsync();
+
+
+            UserDto dto = new UserDto()
+            {
+                JwtToken = _jwtService.GenerateAuthorizationToken(user.UserId, "User"),
+                UserId = user.UserId
+            };
+
+            var cookieOptions = new CookieOptions
+            {
+                HttpOnly = true,
+                Expires = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Utc).AddDays(30),
+                Secure = true,
+                SameSite = SameSiteMode.None
+            };
+            Response.Cookies.Append(CookieKey, dto.JwtToken, cookieOptions);
+
+            Logger.Debug($"Post register finished, user login: {dto.UserId}, token: {dto.JwtToken}");
+            return StatusCode(200, dto);
 
             //TODO: Uncomment the next line to return response 200 or use other options such as return this.NotFound(), return this.BadRequest(..), ...
             // return StatusCode(200, UserDto);
@@ -200,6 +242,36 @@ namespace AuthenticationAPI.Controllers
         [SwaggerResponse(statusCode: 400, type: typeof(ErrorDto), description: "Old and new passwords doesn`t match")]
         public async Task<IActionResult> PutUpdateUser([FromBody] UpdateUserDto updateUserDto)
         {
+
+            var user = _context.Users.FirstOrDefault(x => x.UserId == updateUserDto.UserId);
+            if (user == null)
+            {
+                return StatusCode(400, new ErrorDto { Id = Guid.NewGuid().ToString(), Message = "User not found", Code = "404" });
+            }
+            else if (user != null)
+            {
+                if (user.VerifyPasswordHash(updateUserDto.OldPassword.ToString()) &&
+                    !updateUserDto.OldPassword.ToString().Equals(updateUserDto.NewPassword.ToString()))
+                {
+                    user.Login = updateUserDto.Login;
+                    user.CreatePasswordHash(updateUserDto.NewPassword);
+                    user.Email = updateUserDto.Email;
+                    using (var transaction = _context.Database.BeginTransaction())
+                    {
+                        try
+                        {
+                            await _context.SaveChangesAsync();
+                            transaction.Commit();
+                        }
+                        catch (Exception ex)
+                        {
+                            transaction.Rollback();
+                            Log.Debug(ex.Message);
+                        }
+                    }
+                }
+            }
+            
 
             //TODO: Uncomment the next line to return response 200 or use other options such as return this.NotFound(), return this.BadRequest(..), ...
             // return StatusCode(200);

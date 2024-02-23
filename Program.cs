@@ -64,7 +64,7 @@ builder.Services.AddSwaggerGen(options =>
     };
 
     options.AddSecurityDefinition(jwtSecurityScheme.Reference.Id, jwtSecurityScheme);
-    options.OperationFilter<SecurityRequirementsOperationFilter>();
+    options.OperationFilter<SecurityRequirementsOperationFilter>(true, jwtSecurityScheme.Reference.Id);
 });
 
 // Configure Frontend Authentication Service
