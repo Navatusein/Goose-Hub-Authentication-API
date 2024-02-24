@@ -26,6 +26,20 @@ namespace AuthenticationAPI.Models
         [Required]
         public string Code { get; set; } = null!;
 
+        public ErrorDto(string message, string code)
+        {
+            Id = Guid.NewGuid().ToString();
+            Message = message;
+            Code = code;
+        }
+
+        public ErrorDto()
+        {
+            Id = Guid.NewGuid().ToString();
+            Message = string.Empty;
+            Code = string.Empty;
+        }
+
         /// <summary>
         /// Returns the string presentation of the object
         /// </summary>
