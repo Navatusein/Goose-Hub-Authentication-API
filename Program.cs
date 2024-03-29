@@ -1,6 +1,7 @@
 using AuthenticationAPI.Database;
 using AuthenticationAPI.Middleware;
 using AuthenticationAPI.Service;
+using MassTransit;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -93,12 +94,28 @@ builder.Services.AddDbContextPool<AuthenticationApiDbContext>(options =>
             options.UseSqlite(builder.Configuration["Database:ConnectionString"]);
             break;
         default:
-            throw new Exception("Invlaid Database Provider");
+            throw new Exception("Invalid Database Provider");
     }
 });
 
-// Configure AutoMapper
-builder.Services.AddAutoMapper(typeof(AutoMapperConfig));
+// Add MassTransit
+builder.Services.AddMassTransit(options =>
+{
+    options.SetEndpointNameFormatter(new KebabCaseEndpointNameFormatter("authentication-api", false));
+
+    options.UsingRabbitMq((context, config) =>
+    {
+        var host = builder.Configuration.GetSection("RabbitMq:Host").Get<string>();
+
+        config.Host(host, "/", host =>
+        {
+            host.Username(builder.Configuration.GetSection("RabbitMq:Username").Get<string>());
+            host.Password(builder.Configuration.GetSection("RabbitMq:Password").Get<string>());
+        });
+
+        config.ConfigureEndpoints(context);
+    });
+});
 
 // Add JwtService
 builder.Services.AddSingleton<JwtService>();

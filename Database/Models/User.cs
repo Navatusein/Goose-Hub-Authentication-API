@@ -1,10 +1,9 @@
-﻿using Castle.Components.DictionaryAdapter;
-using System.Security.Cryptography;
+﻿using System.Security.Cryptography;
 
 namespace AuthenticationAPI.Database.Models
 {
     /// <summary>
-    /// 
+    /// Model for store user data
     /// </summary>
     public class User
     {
@@ -45,10 +44,10 @@ namespace AuthenticationAPI.Database.Models
         public string PasswordSalt { get; set; } = null!;
 
         /// <summary>
-        /// Verify recieved hash of password
+        /// Verify received hash of password
         /// </summary>
         /// <param name="password">User password</param>
-        /// <returns>True if user password </returns>
+        /// <returns>True if user password</returns>
         public bool VerifyPasswordHash(string password)
         {
             byte[] passwordHashBytes = Convert.FromBase64String(this.PasswordHash);

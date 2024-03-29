@@ -77,6 +77,7 @@ namespace AuthenticationAPI.Service
             var claims = new[]
             {
                 new Claim("UserId", userId),
+                new Claim("Role", role),
                 new Claim(ClaimTypes.Role, role)
             };
 
