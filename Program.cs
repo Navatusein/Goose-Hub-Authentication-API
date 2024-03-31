@@ -126,7 +126,10 @@ var app = builder.Build();
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
-    app.UseSwaggerUI();
+    app.UseSwaggerUI(option =>
+    {
+        option.DocumentTitle = "Authentication API";
+    });
 }
 
 // Add Exception Handling Middleware

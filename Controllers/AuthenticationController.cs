@@ -59,7 +59,7 @@ namespace AuthenticationAPI.Controllers
 
             UserDto dto = new UserDto()
             {
-                JwtToken = _jwtService.GenerateAuthorizationToken(user.UserId, "User"),
+                JwtToken = _jwtService.GenerateAuthorizationToken(user.UserId, user.Role),
                 UserId = user.UserId
             };
 
