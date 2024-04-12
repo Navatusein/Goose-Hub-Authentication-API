@@ -19,11 +19,6 @@ namespace AuthenticationAPI.Database.Models
         public string UserId { get; set; } = null!;
 
         /// <summary>
-        /// user`s login
-        /// </summary>
-        public string Login { get; set; } = null!;
-
-        /// <summary>
         /// User`s email
         /// </summary>
         public string Email { get; set; } = null!;

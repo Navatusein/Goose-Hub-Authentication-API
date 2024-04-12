@@ -49,13 +49,13 @@ namespace AuthenticationAPI.Controllers
         [Route("login")]
         [AllowAnonymous]
         [SwaggerResponse(statusCode: 200, type: typeof(UserDto), description: "Login success")]
-        [SwaggerResponse(statusCode: 400, type: typeof(ErrorDto), description: "Invalid login or password")]
+        [SwaggerResponse(statusCode: 400, type: typeof(ErrorDto), description: "Invalid email or password")]
         public async Task<IActionResult> PostLogin([FromBody] LoginDto loginDto)
         {
-            var user = await _context.Users.FirstOrDefaultAsync(u => u.Login.ToLower() == loginDto.Login.ToLower());
+            var user = await _context.Users.FirstOrDefaultAsync(x => x.Email.ToLower() == loginDto.Email.ToLower());
             
             if (user == null || !user.VerifyPasswordHash(loginDto.Password))
-                return StatusCode(400, new ErrorDto("Invalid login or password", "400"));
+                return StatusCode(400, new ErrorDto("Invalid email or password", "400"));
 
             UserDto dto = new UserDto()
             {
@@ -99,7 +99,7 @@ namespace AuthenticationAPI.Controllers
             if (!_jwtService.ValidateRefreshToken(refreshToken, userDto.UserId))
                 return StatusCode(400, new ErrorDto("Invalid refresh token", "400"));
 
-            var user = await _context.Users.FirstOrDefaultAsync(u => u.UserId == userDto.UserId);
+            var user = await _context.Users.FirstOrDefaultAsync(x => x.UserId == userDto.UserId);
 
             if(user == null)
                 return StatusCode(400, new ErrorDto("Invalid user data", "400"));
@@ -141,14 +141,14 @@ namespace AuthenticationAPI.Controllers
         [SwaggerResponse(statusCode: 400, type: typeof(ErrorDto), description: "Login already taken")]
         public async Task<IActionResult> PostRegister([FromBody] RegisterDto registerDto, CancellationToken cancellationToken)
         {
-            var user = _context.Users.FirstOrDefault(u => u.Login.ToLower() == registerDto.Login.ToLower());
+            var user = _context.Users.FirstOrDefault(x => x.Email.ToLower() == registerDto.Email.ToLower());
 
             if (user != null)
-                return StatusCode(400, new ErrorDto("Login is already taken", "400"));
+                return StatusCode(400, new ErrorDto("Email is already taken", "400"));
 
             var createUserProfileEvent = new CreateUserProfileEvent()
             {
-                Name = registerDto.Login,
+                Name = registerDto.Name,
                 Email = registerDto.Email,
             };
 
@@ -157,8 +157,7 @@ namespace AuthenticationAPI.Controllers
             user = new User()
             {
                 UserId = result.Message.UserProfileId,
-                Login = registerDto.Login,
-                Email = registerDto.Email,
+                Email = registerDto.Email.ToLower(),
                 Role = "User"
             };
 
@@ -192,15 +191,15 @@ namespace AuthenticationAPI.Controllers
         /// <remarks>Update user login, password, email</remarks>
         /// <param name="updateUserDto"></param>
         /// <response code="200">OK</response>
-        /// <response code="400">Old and new passwords doesn&#39;t match</response>
+        /// <response code="400">Invalid old password</response>
         /// <response code="401">Unauthorized</response>
         [HttpPut]
         [Route("update-user")]
         [Authorize(Roles = "User,Admin")]
-        [SwaggerResponse(statusCode: 400, type: typeof(ErrorDto), description: "Old and new passwords doesn`t match")]
+        [SwaggerResponse(statusCode: 400, type: typeof(ErrorDto), description: "Invalid old password")]
         public async Task<IActionResult> PutUpdateUser([FromBody] UpdateUserDto updateUserDto)
         {
-            var userId = User.Claims.First(x => x.Type == "UserId").ToString();
+            var userId = User.Claims.First(x => x.Type == "UserId").Value.ToString();
 
             var user = _context.Users.FirstOrDefault(x => x.UserId == userId);
             
@@ -208,12 +207,24 @@ namespace AuthenticationAPI.Controllers
                 return StatusCode(404, new ErrorDto("User not found", "404"));
 
             if (!user.VerifyPasswordHash(updateUserDto.OldPassword))
-                return StatusCode(401, new ErrorDto("Old and new passwords doesn`t match", "401"));
+                return StatusCode(400, new ErrorDto("Invalid old password", "400"));
 
-            user.Login = updateUserDto.Login;
-            user.Email = updateUserDto.Email;
-            user.CreatePasswordHash(updateUserDto.NewPassword);
+            if (updateUserDto.Email != user.Email)
+            {
+                var testUser = _context.Users.FirstOrDefaultAsync(x => x.Email.ToLower() == updateUserDto.Email.ToLower());
 
+                if (testUser != null)
+                    return StatusCode(400, new ErrorDto("Email is already taken", "400"));
+
+                user.Email = updateUserDto.Email;
+            }
+
+            if (updateUserDto.NewPassword != null) 
+            {
+                user.CreatePasswordHash(updateUserDto.NewPassword);
+            }
+            
+            
             await _context.SaveChangesAsync();
 
             return StatusCode(200);

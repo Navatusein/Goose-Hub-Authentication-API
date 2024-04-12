@@ -106,8 +106,9 @@ builder.Services.AddMassTransit(options =>
     options.UsingRabbitMq((context, config) =>
     {
         var host = builder.Configuration.GetSection("RabbitMq:Host").Get<string>();
+        var virtualHost = builder.Configuration.GetSection("RabbitMq:VirtualHost").Get<string>();
 
-        config.Host(host, "/", host =>
+        config.Host(host, virtualHost, host =>
         {
             host.Username(builder.Configuration.GetSection("RabbitMq:Username").Get<string>());
             host.Password(builder.Configuration.GetSection("RabbitMq:Password").Get<string>());

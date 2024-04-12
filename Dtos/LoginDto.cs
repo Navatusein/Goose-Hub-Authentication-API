@@ -9,10 +9,10 @@ namespace AuthenticationAPI.Dtos
     public partial class LoginDto
     {
         /// <summary>
-        /// Gets or Sets Login
+        /// Gets or Sets Email
         /// </summary>
         [Required]
-        public string Login { get; set; } = null!;
+        public string Email { get; set; } = null!;
 
         /// <summary>
         /// Gets or Sets Password

@@ -15,10 +15,10 @@ namespace AuthenticationAPI.Dtos
         public string UserId { get; set; } = null!;
 
         /// <summary>
-        /// Gets or Sets Login
+        /// Gets or Sets Email
         /// </summary>
         [Required]
-        public string Login { get; set; } = null!;
+        public string Email { get; set; } = null!;
 
         /// <summary>
         /// Gets or Sets OldPassword
@@ -29,13 +29,6 @@ namespace AuthenticationAPI.Dtos
         /// <summary>
         /// Gets or Sets NewPassword
         /// </summary>
-        [Required]
-        public string NewPassword { get; set; } = null!;
-
-        /// <summary>
-        /// Gets or Sets Email
-        /// </summary>
-        [Required]
-        public string Email { get; set; } = null!;
+        public string? NewPassword { get; set; }
     }
 }
