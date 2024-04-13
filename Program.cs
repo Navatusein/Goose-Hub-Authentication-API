@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using Pomelo.EntityFrameworkCore.MySql.Infrastructure;
 using Serilog;
 using Swashbuckle.AspNetCore.Filters;
 using System.Reflection;
@@ -92,6 +93,12 @@ builder.Services.AddDbContextPool<AuthenticationApiDbContext>(options =>
     {
         case "Sqlite":
             options.UseSqlite(builder.Configuration["Database:ConnectionString"]);
+            break;
+        case "MySql":
+            options.UseMySql(builder.Configuration["Database:ConnectionString"], new MySqlServerVersion(new Version(builder.Configuration["Database:Version"])));
+            break;
+        case "MariaDb":
+            options.UseMySql(builder.Configuration["Database:ConnectionString"], new MariaDbServerVersion(new Version(builder.Configuration["Database:Version"])));
             break;
         default:
             throw new Exception("Invalid Database Provider");
