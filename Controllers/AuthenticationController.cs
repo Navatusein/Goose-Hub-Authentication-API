@@ -17,7 +17,7 @@ namespace AuthenticationAPI.Controllers
     /// <summary>
     /// Authentication Controller
     /// </summary>
-    [Route("/api/authentication-api/v1")]
+    [Route("v1")]
     [ApiController]
     public class AuthenticationController : ControllerBase
     {
