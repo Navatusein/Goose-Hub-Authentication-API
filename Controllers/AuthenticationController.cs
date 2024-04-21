@@ -104,7 +104,7 @@ namespace AuthenticationAPI.Controllers
             if(user == null)
                 return StatusCode(400, new ErrorDto("Invalid user data", "400"));
 
-            refreshToken = _jwtService.GenerateRefreshToken(refreshToken);
+            refreshToken = _jwtService.GenerateRefreshToken(user.UserId);
 
             var cookieOptions = new CookieOptions
             {
