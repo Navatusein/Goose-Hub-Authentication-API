@@ -9,12 +9,6 @@ namespace AuthenticationAPI.Dtos
     public partial class UpdateUserDto
     {
         /// <summary>
-        /// Gets or Sets UserId
-        /// </summary>
-        [Required]
-        public string UserId { get; set; } = null!;
-
-        /// <summary>
         /// Gets or Sets Email
         /// </summary>
         [Required]
