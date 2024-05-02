@@ -211,7 +211,7 @@ namespace AuthenticationAPI.Controllers
 
             if (updateUserDto.Email != user.Email)
             {
-                var testUser = _context.Users.FirstOrDefaultAsync(x => x.Email.ToLower() == updateUserDto.Email.ToLower());
+                var testUser = await _context.Users.FirstOrDefaultAsync(x => x.Email.ToLower() == updateUserDto.Email.ToLower());
 
                 if (testUser != null)
                     return StatusCode(400, new ErrorDto("Email is already taken", "400"));
