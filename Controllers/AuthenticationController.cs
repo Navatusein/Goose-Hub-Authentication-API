@@ -219,7 +219,7 @@ namespace AuthenticationAPI.Controllers
                 user.Email = updateUserDto.Email;
             }
 
-            if (updateUserDto.NewPassword != null) 
+            if (updateUserDto.NewPassword != null || updateUserDto.NewPassword?.Trim().Length != 0) 
             {
                 user.CreatePasswordHash(updateUserDto.NewPassword);
             }
