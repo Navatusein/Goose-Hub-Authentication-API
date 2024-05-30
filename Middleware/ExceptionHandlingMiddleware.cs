@@ -1,4 +1,4 @@
-﻿using AuthenticationAPI.Models;
+﻿using AuthenticationAPI.Dtos;
 using Serilog;
 using System.IdentityModel.Tokens.Jwt;
 using System.Net;
@@ -43,10 +43,7 @@ namespace AuthenticationAPI.Middleware
 
             var response = context.Response;
 
-            var errorDto = new ErrorDto()
-            {
-                Id = Guid.NewGuid().ToString()
-            };
+            var errorDto = new ErrorDto();
 
             Logger.Error(exception, "Handle Exception");
 

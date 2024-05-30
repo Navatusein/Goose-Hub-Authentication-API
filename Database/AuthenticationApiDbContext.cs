@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using AuthenticationAPI.Database.Models;
 
 namespace AuthenticationAPI.Database
 {
@@ -8,7 +9,12 @@ namespace AuthenticationAPI.Database
     public class AuthenticationApiDbContext : DbContext
     {
         /// <summary>
-        /// Constructor of class AuthenticationApiDbContext
+        /// Gets or Sets Users
+        /// </summary>
+        public DbSet<User> Users { get; set; }
+
+        /// <summary>
+        /// Constructor
         /// </summary>
         public AuthenticationApiDbContext(DbContextOptions<AuthenticationApiDbContext> options) : base(options)
         {
